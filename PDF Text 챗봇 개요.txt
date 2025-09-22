@@ -48,7 +48,7 @@
 
 역할 세 분담
 웹 구현
-pdf 에서 txt로 추출하는 것 (청크)
+pdf 에서 txt로 추출하는 것 (청크) >>>>> pdf에서 txt를 추출하는 것, 큰 텍스트 데이터를 작은 조각으로 나누는 것(청크)
 txt를 임베딩하는것 (임베딩)
 ■ 임베딩: 데이터 처리 시 각 데이터에 일대일로 대응하는 벡터를 만듦
 	□ 임베딩 유형:
@@ -227,4 +227,5 @@ print(f"벡터 차원: {len(vector)}")
 			https://flask.palletsprojects.com/en/stable/
 			└Flask Tutorial
 			https://realpython.com/learning-paths/flask-by-example/
+
 		-서버
