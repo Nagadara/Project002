@@ -1,3 +1,5 @@
+// src/components/ChatComponent.tsx
+
 import React, { useState } from 'react';
 
 // 백엔드에서 받을 응답 데이터의 타입을 정의합니다.
@@ -20,8 +22,8 @@ function ChatComponent(): React.ReactElement {
     setAnswer('');
 
     try {
-      // 백엔드 API 서버 주소. 포트 번호를 꼭 확인하세요.
-      const response = await fetch('http://localhost:5173/api/chat', {
+      // ✅ 백엔드 블루프린트 prefix('/api')에 맞춰 경로 수정
+      const response = await fetch('http://localhost:5000/api/rag-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
