@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { useState, useEffect } from 'react';
 import { EnhancedChatInterface } from './components/EnhancedChatInterface';
 import { Message, PDFFile } from './types';
@@ -16,7 +18,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 업로드 진행 시뮬레이션
+  // 🔄 기존 진행률/상태 시뮬레이션 로직은 유지
   useEffect(() => {
     if (uploadedFile && uploadedFile.status === 'uploading') {
       const timer = setInterval(() => {
@@ -27,7 +29,7 @@ function App() {
           
           if (newProgress >= 100) {
             clearInterval(timer);
-            // 업로드 완료 후 처리 단계로 전환
+            // 업로드 완료 후 처리 단계로 전환(시뮬레이션)
             setTimeout(() => {
               setUploadedFile(prev => prev ? { ...prev, status: 'processing', uploadProgress: 0 } : null);
               
@@ -48,10 +50,11 @@ function App() {
     }
   }, [uploadedFile?.status]);
 
-  const handleFileUpload = (file: PDFFile) => {
+  // ✅ 수정 포인트: 실제 백엔드로 업로드 호출 추가
+  const handleFileUpload = async (file: PDFFile) => {
     setUploadedFile(file);
     
-    // 파일 업로드 메시지 추가
+    // UI에 파일 업로드 시스템 메시지 추가(기존 유지)
     const uploadMessage: Message = {
       id: Date.now().toString(),
       content: 'FILE_UPLOADED',
@@ -59,6 +62,31 @@ function App() {
       timestamp: new Date()
     };
     setMessages([uploadMessage]);
+
+    // 실제 업로드 호출 (백엔드 블루프린트 prefix '/api')
+    try {
+      const formData = new FormData();
+      formData.append('file', file.file);
+
+      const resp = await fetch('http://localhost:5000/api/upload-pdf', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || '업로드 실패');
+      }
+
+      // 성공 시: (시뮬레이터가 이미 상태 전환을 수행하므로 여기서는 로깅만)
+      // 필요하면 즉시 'processing'으로 전환하고 싶다면 아래 주석 해제 가능
+      // setUploadedFile(prev => prev ? { ...prev, status: 'processing' } : prev);
+
+    } catch (e) {
+      console.error('PDF 업로드 오류:', e);
+      // 실패 시 상태를 error로 표시
+      setUploadedFile(prev => prev ? { ...prev, status: 'error' } : prev);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -77,9 +105,8 @@ function App() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     
-    // AI 응답 시뮬레이션
     try {
-      // 백엔드의 RAG 채팅 API 호출
+      // ✅ 백엔드 라우트는 /api/rag-chat
       const response = await fetch('http://localhost:5000/api/rag-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,11 +114,11 @@ function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || '서버 오류');
       }
 
-      const data:ApiResponse = await response.json();
+      const data: ApiResponse = await response.json();
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: data.answer,
