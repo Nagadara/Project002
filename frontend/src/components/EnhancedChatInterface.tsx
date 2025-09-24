@@ -160,7 +160,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
               className={`p-3 rounded-xl transition-all duration-200 h-12 w-12 flex items-center justify-center flex-shrink-0 ${
                 !canSendMessage
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
               }`}
             >
               {isLoading ? (
