@@ -5,9 +5,10 @@ import { EnhancedChatInterface } from './components/EnhancedChatInterface';
 import { Message, PDFFile } from './types';
 import pencilImage from './assets/pencil.png';
 import { Zap, Shield, Clock } from 'lucide-react';
-import { Routes, Route, Link } from 'react-router-dom';
-import AboutPage from './components/AboutPage';
+import { Routes, Route} from 'react-router-dom';
+import HistoryPage from "./components/HistoryPage";
 import ChatComponent from './components/ChatComponent';
+
 
 interface ApiResponse {
   answer: string;
@@ -17,44 +18,36 @@ function App() {
   const [uploadedFile, setUploadedFile] = useState<PDFFile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false); // ✅ 사이드바 상태 추가
 
-  // 🔄 기존 진행률/상태 시뮬레이션 로직은 유지
+  // 🔄 기존 업로드 진행률 시뮬레이션 로직 유지
   useEffect(() => {
     if (uploadedFile && uploadedFile.status === 'uploading') {
       const timer = setInterval(() => {
         setUploadedFile(prev => {
           if (!prev) return null;
-          
           const newProgress = Math.min(prev.uploadProgress + Math.random() * 15, 100);
-          
+
           if (newProgress >= 100) {
             clearInterval(timer);
-            // 업로드 완료 후 처리 단계로 전환(시뮬레이션)
             setTimeout(() => {
               setUploadedFile(prev => prev ? { ...prev, status: 'processing', uploadProgress: 0 } : null);
-              
-              // 처리 완료까지 시뮬레이션
               setTimeout(() => {
                 setUploadedFile(prev => prev ? { ...prev, status: 'ready', uploadProgress: 100 } : null);
               }, 2000);
             }, 500);
-            
             return { ...prev, uploadProgress: 100 };
           }
-          
           return { ...prev, uploadProgress: newProgress };
         });
       }, 200);
-      
+
       return () => clearInterval(timer);
     }
   }, [uploadedFile?.status]);
 
-  // ✅ 수정 포인트: 실제 백엔드로 업로드 호출 추가
   const handleFileUpload = async (file: PDFFile) => {
     setUploadedFile(file);
-    
-    // UI에 파일 업로드 시스템 메시지 추가(기존 유지)
     const uploadMessage: Message = {
       id: Date.now().toString(),
       content: 'FILE_UPLOADED',
@@ -63,7 +56,6 @@ function App() {
     };
     setMessages([uploadMessage]);
 
-    // 실제 업로드 호출 (백엔드 블루프린트 prefix '/api')
     try {
       const formData = new FormData();
       formData.append('file', file.file);
@@ -77,14 +69,8 @@ function App() {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.error || '업로드 실패');
       }
-
-      // 성공 시: (시뮬레이터가 이미 상태 전환을 수행하므로 여기서는 로깅만)
-      // 필요하면 즉시 'processing'으로 전환하고 싶다면 아래 주석 해제 가능
-      // setUploadedFile(prev => prev ? { ...prev, status: 'processing' } : prev);
-
     } catch (e) {
       console.error('PDF 업로드 오류:', e);
-      // 실패 시 상태를 error로 표시
       setUploadedFile(prev => prev ? { ...prev, status: 'error' } : prev);
     }
   };
@@ -101,12 +87,10 @@ function App() {
       type: 'user',
       timestamp: new Date()
     };
-    
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    
+
     try {
-      // ✅ 백엔드 라우트는 /api/rag-chat
       const response = await fetch('http://localhost:5000/api/rag-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -126,7 +110,6 @@ function App() {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, assistantMessage]);
-
     } catch (error) {
       const errorMessageContent = (error instanceof Error) ? error.message : "답변을 가져오는 중 오류가 발생했습니다.";
       const errorMessage: Message = {
@@ -141,23 +124,26 @@ function App() {
     }
   };
 
+  const toggleHistorySidebar = () => {
+    setShowHistorySidebar(prev => !prev);
+  };
+
   return (
-    <div className="min-h-screen bg-blue-50">
+    <div className="min-h-screen bg-blue-50 relative overflow-hidden">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <header className="text-center mb-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <Link to="/about" className="text-blue-600 hover:underline">About</Link>
-            <div className="flex items-center gap-4 mx-auto">
-              <div>
-                <img src={pencilImage} alt="Pencil" className="w-16 h-16 text-white" />
-              </div>
-              <div className="text-center">
-                <h1 className="font-bold text-black" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '38px' }}>
-                  니 필기 내꺼 ㅋ
-                </h1>
-                <p className="text-gray-600 font-bold" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '21px' }}>나의 비밀 요약 친구</p>
-              </div>
+        <header className="text-center mb-8 relative">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div>
+              <img src={pencilImage} alt="Pencil" className="w-16 h-16 text-white" />
+            </div>
+            <div className="text-center">
+              <h1 className="font-bold text-black" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '38px' }}>
+                니 필기 내꺼 ㅋ
+              </h1>
+              <p className="text-gray-600 font-bold" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '21px' }}>
+                나의 비밀 요약 친구
+              </p>
             </div>
           </div>
 
@@ -179,13 +165,21 @@ function App() {
               <p className="text-xs text-gray-600">즉시 질문하고 답변 받기</p>
             </div>
           </div>
+
+          {/* History 버튼 */}
+          <button 
+            onClick={toggleHistorySidebar} 
+            className="absolute top-6 left-[clamp(12px,10vw,200px)] text-black font-bold" 
+            style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '21px', letterSpacing: '0.063em' }}
+          >
+            대화기록
+          </button>
         </header>
 
         {/* Main Content Area for Routing */}
         <Routes>
           <Route path="/" element={
             <>
-              {/* Main Chat Interface */}
               <div className="max-w-4xl mx-auto">
                 <div className="h-[600px] lg:h-[700px]">
                   <EnhancedChatInterface
@@ -199,15 +193,22 @@ function App() {
                 </div>
               </div>
 
-              {/* Footer */}
               <footer className="text-center mt-8 text-gray-500 text-sm">
                 <p>🤖 AI 기반 PDF 분석 시스템 • 안전하고 빠른 문서 처리 • 24/7 서비스 제공</p>
               </footer>
             </>
           } />
-          <Route path="/about" element={<AboutPage />} />
           <Route path="/chat" element={<ChatComponent />} />
         </Routes>
+      </div>
+
+      {/* History Sidebar */}
+      <div className={`fixed top-0 left-0 h-full
+                 w-[min(90vw,480px)]
+                 bg-white transform transition-transform duration-300
+                 ${showHistorySidebar ? 'translate-x-0 shadow-2xl' : '-translate-x-[calc(100%+12px)] shadow-none' }
+                 overflow-hidden`}>
+        <HistoryPage onClose={toggleHistorySidebar} />
       </div>
     </div>
   );

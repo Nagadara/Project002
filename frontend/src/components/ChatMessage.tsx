@@ -4,7 +4,7 @@ import { Message, PDFFile } from '../types';
 
 interface ChatMessageProps {
   message: Message;
-  uploadedFile?: PDFFile;
+  uploadedFile?: PDFFile; 
 }
 
   const formatFileSize = (bytes: number): string => {
