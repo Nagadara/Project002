@@ -98,6 +98,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                 key={message.id} 
                 message={message} 
                 uploadedFile={message.type === 'system' ? (uploadedFile ?? undefined) : undefined}
+                onRemoveFile={message.type === 'system' ? onRemoveFile : undefined}
               />
             ))}
             {isLoading && (
