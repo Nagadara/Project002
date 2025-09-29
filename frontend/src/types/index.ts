@@ -6,7 +6,7 @@ export interface Message {
 }
 
 export interface PDFFile {
-  file: File;
+  //file: File;
   id?: string;
   name: string;
   size: number;

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Message } from '../types';
+import { Message, PDFFile } from '../types';
 import { ChatMessage } from './ChatMessage';
-import { ChevronLeft, X } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react'; // For back button icon
 
-// 대화 히스토리 아이템: 파일 객체/메타 없음! 제목만 사용
+// Define a type for a single conversation history item
 interface ConversationHistoryItem {
   id: string;
-  title: string;       // ← PDF 이름을 그대로 제목으로 사용
+  title: string; // e.g., file name
   messages: Message[];
+  uploadedFile?: PDFFile; // Optional, if a file was associated with the conversation
 }
 
 interface HistoryPageProps {
@@ -18,13 +19,22 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [allConversations, setAllConversations] = useState<ConversationHistoryItem[]>([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
-    // 히스토리: 제목만 있고 파일 메타/객체 없음
+    // Simulate loading historical data with multiple conversations
     const simulatedConversations: ConversationHistoryItem[] = [
       {
         id: 'conv-1',
         title: '과거_강의노트.pdf',
+        uploadedFile: {
+          id: 'history-pdf-1',
+          name: '과거_강의노2.pdf',
+          size: 1024 * 1024 * 5, // 5MB
+          uploadProgress: 100,
+          status: 'ready',
+          url: '#'
+        },
         messages: [
           {
             id: 'hist-1-msg-1',
@@ -49,6 +59,14 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
       {
         id: 'conv-2',
         title: '프로젝트_기획서_v1.pdf',
+        uploadedFile: {
+          id: 'history-pdf-2',
+          name: '프로젝트_기획서_v1.pdf',
+          size: 1024 * 1024 * 8, // 8MB
+          uploadProgress: 100,
+          status: 'ready',
+          url: '#'
+        },
         messages: [
           {
             id: 'hist-2-msg-1',
@@ -73,6 +91,14 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
       {
         id: 'conv-3',
         title: '연구_논문_최종.pdf',
+        uploadedFile: {
+          id: 'history-pdf-3',
+          name: '연구_논문_최종.pdf',
+          size: 1024 * 1024 * 12, // 12MB
+          uploadProgress: 100,
+          status: 'ready',
+          url: '#'
+        },
         messages: [
           {
             id: 'hist-3-msg-1',
@@ -100,16 +126,55 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selectedConversationId]);
+  }, [selectedConversationId, allConversations]); // Scroll when selected conversation or messages change
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedConversationId) return;
+
+    const userMessage: Message = {
+      id: `msg-${Date.now()}-user`,
+      content: newMessage,
+      type: 'user',
+      timestamp: new Date(),
+    };
+
+    setAllConversations((prevConversations) =>
+      prevConversations.map((conv) =>
+        conv.id === selectedConversationId
+          ? { ...conv, messages: [...conv.messages, userMessage] }
+          : conv
+      )
+    );
+    setNewMessage('');
+
+    // Simulate assistant response
+    setTimeout(() => {
+      const assistantResponse: Message = {
+        id: `msg-${Date.now()}-assistant`,
+        content: `"${userMessage.content}"에 대한 답변입니다.`,
+        type: 'assistant',
+        timestamp: new Date(),
+      };
+      setAllConversations((prevConversations) =>
+        prevConversations.map((conv) =>
+          conv.id === selectedConversationId
+            ? { ...conv, messages: [...conv.messages, assistantResponse] }
+            : conv
+        )
+      );
+    }, 1000); // Simulate a 1-second delay for response
+  };
 
   const selectedConversation = allConversations.find(
     (conv) => conv.id === selectedConversationId
   );
 
   return (
-  <div className="flex h-full flex-col w-full p-4 md:p-5 lg:p-6 overflow-y-auto"
-    style={{ scrollbarGutter: 'stable' }}>      
-    <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+    <div className="flex flex-col h-full p-4"> {/* Removed bg, shadow, border, overflow-hidden. Added p-4 */}
+      {/* Main Content Area - Now the "note" */}
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"> {/* Added bg, shadow, border, overflow-hidden */}
+
+
         {/* Header */}
         <header className="text-center py-4 border-b border-gray-100 relative">
           {selectedConversationId && (
@@ -136,36 +201,69 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
         {/* Messages/List Area */}
         <div className="flex-1 overflow-y-auto p-6 min-h-0 bg-blue-50">
           {selectedConversationId ? (
-            // Detail View
-            <div className="space-y-4">
-              {selectedConversation?.messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+            // ===== Detail View =====
+            <>
+              <div className="bg-white rounded-xl shadow-md p-4 flex flex-col">
+                <div className="relative flex-1 overflow-y-auto pr-2">
+                  <div className="absolute inset-y-0 left-1/2 w-px bg-gray-300 transform -translate-x-1/2"></div>
+                  <div className="space-y-4">
+                    {selectedConversation?.messages.map((message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        uploadedFile={
+                          message.type === 'system'
+                            ? selectedConversation?.uploadedFile
+                            : undefined
+                        }
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+
+                {/* New message input area */}
+                <div className="mt-4 flex items-center border-t pt-4">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && newMessage.trim()) {
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="메시지를 입력하세요..."
+                    className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim()}
+                    className="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
+                  >
+                    전송
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
-            // List View - Bookshelf
+            // ===== List View =====
             <div className="bg-white border-l-8 border-r-8 border-t-8 border-yellow-700">
-              {allConversations.map((conv) => {
-                const firstTs = conv.messages[0]?.timestamp ?? new Date();
-                return (
-                  <React.Fragment key={conv.id}>
-                    <div
-                      onClick={() => setSelectedConversationId(conv.id)}
-                      className="p-4 bg-white rounded-md shadow-md hover:bg-gray-50 cursor-pointer transition-colors transform hover:-translate-y-1 mx-4 my-4"
-                    >
-                      <h3 className="font-semibold text-gray-800">{conv.title}</h3>
-                      <p className="text-xs text-gray-500">
-                        {conv.messages.length} 메시지 • {new Date(firstTs).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="h-2 bg-yellow-700 shadow-inner"></div>
-                  </React.Fragment>
-                );
-              })}
+              {allConversations.map((conv) => (
+                <React.Fragment key={conv.id}>
+                  <div
+                    onClick={() => setSelectedConversationId(conv.id)}
+                    className="p-4 bg-white rounded-md shadow-md hover:bg-gray-50 cursor-pointer transition-colors transform hover:-translate-y-1 mx-4 my-4"
+                  >
+                    <h3 className="font-semibold text-gray-800">{conv.title}</h3>
+                    <p className="text-xs text-gray-500">
+                      {conv.messages.length} 메시지 •{' '}
+                      {new Date(conv.messages[0].timestamp).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="h-2 bg-yellow-700 shadow-inner"></div>
+                </React.Fragment>
+              ))}
             </div>
           )}
         </div>
