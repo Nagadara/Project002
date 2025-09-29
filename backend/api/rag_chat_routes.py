@@ -4,7 +4,6 @@ from flask import Blueprint, request, jsonify
 from rag_core.vector_db import get_vector_store
 import google.generativeai as genai
 import os
-import google.generativeai as genai
 
 # .env에서 읽어온 GOOGLE_API_KEY로 Gemini 초기화
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -44,7 +43,7 @@ def rag_chat():
         """
 
         # 4. Gemini API 호출
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         
         return jsonify({"answer": response.text})

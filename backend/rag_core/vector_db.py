@@ -5,7 +5,7 @@ from chromadb.errors import NotFoundError
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
 # 1. 임베딩 모델 설정
@@ -16,7 +16,7 @@ collection_name = "pdf_collection" # 컬렉션 이름 변경
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="jhgan/ko-sroberta-multitask",
-    model_kwargs={'device': 'cpu'},
+    model_kwargs={'device': 'cpu'}, #GPU 사용중, CPU 사용코드 {'device': 'cpu'}
     encode_kwargs={'normalize_embeddings': False}
 )
 persistent_client = chromadb.PersistentClient(path=DB_PATH)

@@ -1,7 +1,8 @@
 import React from 'react';
 import { User, Bot, FileText, CheckCircle, Loader, AlertCircle, X } from 'lucide-react';
 import { Message, PDFFile } from '../types';
-
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 interface ChatMessageProps {
   message: Message;
   uploadedFile?: PDFFile;
@@ -79,34 +80,44 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, uploadedFile,
   }
   
   return (
-    <div className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : ''}`}>
-      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-blue-200 ${
-        isUser 
-          ? 'bg-gradient-to-r from-blue-50 to-indigo-50' 
-          : 'bg-gray-100'
-      }`}>
-        {isUser ? (
-          <User className="w-4 h-4 text-gray-400" />
-        ) : (
-          <Bot className="w-4 h-4 text-gray-400" />
-        )}
-      </div>
-      
-      <div className={`max-w-[75%] ${isUser ? 'text-right' : ''}`}>
-        <div className={`inline-block p-4 rounded-2xl shadow-sm ${
-          isUser 
-            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-800 border border-blue-200 rounded-br-md' 
-            : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
-        }`}>
-          <p className="whitespace-pre-wrap leading-relaxed text-sm">{message.content}</p>
-        </div>
-        <p className={`text-xs text-gray-500 mt-2 ${isUser ? 'text-right' : ''}`}>
-          {message.timestamp.toLocaleTimeString('ko-KR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </p>
-      </div>
+  <div className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : ''}`}>
+    {/* 아바타 */}
+    <div
+      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-blue-200 ${
+        isUser ? 'bg-gradient-to-r from-blue-50 to-indigo-50' : 'bg-gray-100'
+      }`}
+    >
+      {isUser ? (
+        <User className="w-4 h-4 text-gray-400" />
+      ) : (
+        <Bot className="w-4 h-4 text-gray-400" />
+      )}
     </div>
-  );
+
+    {/* 말풍선 + 타임스탬프 */}
+    <div className={`max-w-[75%] ${isUser ? 'text-right' : ''}`}>
+      <div
+        className={`inline-block p-4 rounded-2xl shadow-sm ${
+          isUser
+            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-800 border border-blue-200 rounded-br-md'
+            : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
+        }`}
+      >
+        {/* ✅ 마크다운 렌더링: **굵게**, 리스트, 표 등 */}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+        >
+          {message.content}
+        </ReactMarkdown>
+      </div>
+
+      <p className={`text-xs text-gray-500 mt-2 ${isUser ? 'text-right' : ''}`}>
+        {message.timestamp.toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </p>
+    </div>
+  </div>
+);
 };
