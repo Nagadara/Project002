@@ -28,8 +28,9 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
         id: 'conv-1',
         title: '과거_강의노트.pdf',
         uploadedFile: {
+          file: new File([], '과거_강의노트.pdf'),
           id: 'history-pdf-1',
-          name: '과거_강의노2.pdf',
+          name: '과거_강의노트.pdf',
           size: 1024 * 1024 * 5, // 5MB
           uploadProgress: 100,
           status: 'ready',
@@ -60,6 +61,7 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
         id: 'conv-2',
         title: '프로젝트_기획서_v1.pdf',
         uploadedFile: {
+          file: new File([], '프로젝트_기획서_v1.pdf'),
           id: 'history-pdf-2',
           name: '프로젝트_기획서_v1.pdf',
           size: 1024 * 1024 * 8, // 8MB
@@ -92,6 +94,7 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
         id: 'conv-3',
         title: '연구_논문_최종.pdf',
         uploadedFile: {
+          file: new File([], '연구_논문_최종.pdf'),
           id: 'history-pdf-3',
           name: '연구_논문_최종.pdf',
           size: 1024 * 1024 * 12, // 12MB
