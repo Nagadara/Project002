@@ -48,7 +48,7 @@ export const CompactPDFUploader: React.FC<CompactPDFUploaderProps> = ({
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       const newFile: PDFFile = {
-        file: file,
+        file,
         name: file.name,
         size: file.size,
         uploadProgress: 0,

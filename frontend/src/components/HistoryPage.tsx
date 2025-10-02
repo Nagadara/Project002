@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Message, PDFFile } from '../types';
 import { ChatMessage } from './ChatMessage';
-import { ChevronLeft, X } from 'lucide-react'; // For back button icon
+import { ChevronLeft, X, Send, Trash2 } from 'lucide-react'; // For back button icon
 
 // Define a type for a single conversation history item
 interface ConversationHistoryItem {
@@ -20,6 +20,8 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [allConversations, setAllConversations] = useState<ConversationHistoryItem[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     // Simulate loading historical data with multiple conversations
@@ -30,7 +32,7 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
         uploadedFile: {
           file: new File([], '과거_강의노트.pdf'),
           id: 'history-pdf-1',
-          name: '과거_강의노트.pdf',
+          name: '과거_강의노2.pdf',
           size: 1024 * 1024 * 5, // 5MB
           uploadProgress: 100,
           status: 'ready',
@@ -129,7 +131,7 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selectedConversationId, allConversations]); // Scroll when selected conversation or messages change
+  }, [selectedConversationId, allConversations]); 
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversationId) return;
@@ -150,7 +152,6 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
     );
     setNewMessage('');
 
-    // Simulate assistant response
     setTimeout(() => {
       const assistantResponse: Message = {
         id: `msg-${Date.now()}-assistant`,
@@ -165,20 +166,55 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
             : conv
         )
       );
-    }, 1000); // Simulate a 1-second delay for response
+    }, 1000); 
   };
+
+  const triggerDeleteConfirmation = (conversationId: string) => {
+    setConversationToDelete(conversationId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (conversationToDelete) {
+      setAllConversations(prev => prev.filter(conv => conv.id !== conversationToDelete));
+      setSelectedConversationId(null);
+      setShowDeleteConfirm(false);
+      setConversationToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setConversationToDelete(null);
+  };
+
 
   const selectedConversation = allConversations.find(
     (conv) => conv.id === selectedConversationId
   );
 
+
+  const bookStyles = [
+    {
+      border: 'border-l-4 border-black',
+      lineColor: 'red',
+    },
+    {
+      border: 'border-l-4 border-black',
+      lineColor: 'green',
+    },
+    {
+      border: 'border-l-4 border-black',
+      lineColor: 'blue',
+    },
+  ];
+
+
   return (
-    <div className="flex flex-col h-full p-4"> {/* Removed bg, shadow, border, overflow-hidden. Added p-4 */}
-      {/* Main Content Area - Now the "note" */}
-      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"> {/* Added bg, shadow, border, overflow-hidden */}
+    <div className="flex flex-col h-full p-4 relative"> 
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"> 
 
 
-        {/* Header */}
         <header className="text-center py-4 border-b border-gray-100 relative">
           {selectedConversationId && (
             <button
@@ -191,6 +227,16 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
           <h2 className="font-bold text-black" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '24px' }}>
             {selectedConversationId ? selectedConversation?.title : '과거 대화 기록'}
           </h2>
+          
+          {selectedConversationId && (
+            <button
+              onClick={() => triggerDeleteConfirmation(selectedConversationId)}
+              className="absolute right-14 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-gray-200 transition-colors"
+            >
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </button>
+          )}
+
           {onClose && (
             <button
               onClick={onClose}
@@ -226,51 +272,94 @@ const HistoryPage = ({ onClose }: HistoryPageProps) => {
                 </div>
 
                 {/* New message input area */}
-                <div className="mt-4 flex items-center border-t pt-4">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && newMessage.trim()) {
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="메시지를 입력하세요..."
-                    className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="mt-4 flex items-center border-t pt-4 gap-3">
+                  <div className="flex-1 relative min-h-[48px]">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newMessage.trim()) {
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder="메시지를 입력하세요..."
+                      className="w-full resize-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                    />
+                  </div>
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
-                    className="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
+                    className={`p-3 rounded-xl transition-all duration-200 h-12 w-12 flex items-center justify-center flex-shrink-0 ${
+                      !newMessage.trim()
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
+                    }`}
                   >
-                    전송
+                    <Send className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             </>
           ) : (
             // ===== List View =====
-            <div className="bg-white border-l-8 border-r-8 border-t-8 border-yellow-700">
-              {allConversations.map((conv) => (
-                <React.Fragment key={conv.id}>
-                  <div
-                    onClick={() => setSelectedConversationId(conv.id)}
-                    className="p-4 bg-white rounded-md shadow-md hover:bg-gray-50 cursor-pointer transition-colors transform hover:-translate-y-1 mx-4 my-4"
-                  >
-                    <h3 className="font-semibold text-gray-800">{conv.title}</h3>
-                    <p className="text-xs text-gray-500">
-                      {conv.messages.length} 메시지 •{' '}
-                      {new Date(conv.messages[0].timestamp).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="h-2 bg-yellow-700 shadow-inner"></div>
-                </React.Fragment>
-              ))}
+            <div className="bg-blue-50 border-l-8 border-r-8 border-t-8 border-gray-300">
+              {allConversations.map((conv, index) => {
+                const style = bookStyles[index % bookStyles.length];
+                return (
+                  <React.Fragment key={conv.id}>
+                    <div
+                      onClick={() => setSelectedConversationId(conv.id)}
+                      className={`relative p-4 rounded-md shadow-lg cursor-pointer transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl mx-4 my-4 ${style.border} hover:brightness-105`}
+                      style={{ backgroundColor: 'black' }}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerDeleteConfirmation(conv.id);
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <div className="px-2 py-1 rounded-xl" style={{ background: `linear-gradient(to left, ${style.lineColor} 12px, white 12px)` }}>
+                        <h3 className={`font-bold text-xl text-black truncate`} style={{ fontFamily: 'NanumSinHonBuBu' }}>{conv.title}</h3>
+                        <p className={`text-base text-black opacity-80`} style={{ fontFamily: 'NanumSinHonBuBu' }}>
+                          {conv.messages.length} 메시지 •{' '}
+                          {new Date(conv.messages[0].timestamp).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-300 shadow-inner"></div>
+                  </React.Fragment>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 rounded-2xl">
+          <div className="bg-white p-8 rounded-xl shadow-2xl text-center mx-4">
+            <p className="text-lg mb-6">정말 이 채팅 기록을 지우실 건가요? (˘̩̩̩ε˘̩ƪ)</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={cancelDelete}
+                className="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors font-bold"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors font-bold"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
