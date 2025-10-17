@@ -3,6 +3,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import EnhancedChatInterface from "./components/EnhancedChatInterface";
 import { Message, PDFFile } from "./types";
+import pencilImage from './assets/pencil.png';
+import { Zap, Shield, Clock } from 'lucide-react';
+import { Routes, Route} from 'react-router-dom';
+import HistoryPage from "./components/HistoryPage";
+import ChatComponent from './components/ChatComponent';
 
 // API 베이스: .env에 VITE_API_BASE가 있으면 사용, 아니면 상대경로(프록시/동일 오리진)
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
@@ -12,6 +17,7 @@ function App(): React.ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<PDFFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false); // ✅ 사이드바 상태 추가
 
   // ------ 파일 업로드 처리 (단일 파일 콜백; 여러 번 호출됨) ------
   const handleFileUpload = useCallback(
@@ -180,38 +186,92 @@ function App(): React.ReactElement {
     [uploadedFiles]
   );
 
+  const toggleHistorySidebar = () => {
+    setShowHistorySidebar(prev => !prev);
+  };
+
   return (
-    <div className="h-screen w-full flex flex-col">
-      {/* 헤더 (원하면 프로젝트 타이틀/로고 등 배치) */}
-      <header className="px-4 py-3 border-b border-gray-200">
-        <h1 className="text-lg font-semibold">PDF RAG Chat (Multi-Upload)</h1>
-        <p className="text-xs text-gray-500">
-          여러 PDF를 업로드해도 누적되어 검색됩니다.
-        </p>
-      </header>
+    <div className="min-h-screen bg-blue-50 relative overflow-hidden">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <header className="text-center mb-8 relative">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div>
+              <img src={pencilImage} alt="Pencil" className="w-16 h-16 text-white" />
+            </div>
+            <div className="text-center">
+              <h1 className="font-bold text-black" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '38px' }}>
+                니 필기 내꺼 ㅋ
+              </h1>
+              <p className="text-gray-600 font-bold" style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '21px' }}>
+                나의 비밀 요약 친구
+              </p>
+            </div>
+          </div>
 
-      {/* 메인: 채팅 인터페이스 */}
-      <main className="flex-1">
-        <EnhancedChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          uploadedFiles={uploadedFiles}
-          onFileUpload={handleFileUpload}
-          onRemoveFile={handleRemoveFile}
-        />
-      </main>
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <Zap className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-800 text-sm">빠른 분석</h3>
+              <p className="text-xs text-gray-600">대용량 PDF도 빠르게 처리</p>
+            </div>
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <Shield className="w-6 h-6 text-green-500 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-800 text-sm">안전한 처리</h3>
+              <p className="text-xs text-gray-600">문서 보안 및 개인정보 보호</p>
+            </div>
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <Clock className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-800 text-sm">실시간 대화</h3>
+              <p className="text-xs text-gray-600">즉시 질문하고 답변 받기</p>
+            </div>
+          </div>
 
-      {/* 푸터(선택) */}
-      <footer className="px-4 py-2 text-xs text-gray-400 border-t border-gray-100">
-        API: <code>{API_BASE || "(same-origin)"}</code>
-        {latestFile ? (
-          <span className="ml-2">
-            • 최근 업로드: <b>{latestFile.name}</b> ({(latestFile.size / (1024 * 1024)).toFixed(1)}
-            MB)
-          </span>
-        ) : null}
-      </footer>
+          {/* History 버튼 */}
+          <button 
+            onClick={toggleHistorySidebar} 
+            className="absolute top-6 left-[clamp(12px,10vw,200px)] text-black font-bold" 
+            style={{ fontFamily: 'NanumSinHonBuBu', fontSize: '21px', letterSpacing: '0.063em' }}
+          >
+            대화기록
+          </button>
+        </header>
+
+        {/* Main Content Area for Routing */}
+        <Routes>
+          <Route path="/" element={
+            <>
+              <div className="max-w-4xl mx-auto">
+                <div className="h-[600px] lg:h-[700px]">
+                  <EnhancedChatInterface
+                    messages={messages}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    uploadedFiles={uploadedFiles}
+                    onFileUpload={handleFileUpload}
+                    onRemoveFile={handleRemoveFile}
+                  />
+                </div>
+              </div>
+
+              <footer className="text-center mt-8 text-gray-500 text-sm">
+                <p>🤖 AI 기반 PDF 분석 시스템 • 안전하고 빠른 문서 처리 • 24/7 서비스 제공</p>
+              </footer>
+            </>
+          } />
+          <Route path="/chat" element={<ChatComponent />} />
+        </Routes>
+      </div>
+
+      {/* History Sidebar */}
+      <div className={`fixed top-0 left-0 h-full
+                 w-[min(90vw,480px)]
+                 bg-white transform transition-transform duration-300
+                 ${showHistorySidebar ? 'translate-x-0 shadow-2xl' : '-translate-x-[calc(100%+12px)] shadow-none' }
+                 overflow-hidden`}>
+        <HistoryPage onClose={toggleHistorySidebar} />
+      </div>
     </div>
   );
 }
