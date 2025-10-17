@@ -1,0 +1,123 @@
+import React from 'react';
+import { User, Bot, FileText, CheckCircle, Loader, AlertCircle, X } from 'lucide-react';
+import { Message, PDFFile } from '../types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+interface ChatMessageProps {
+  message: Message;
+  uploadedFile?: PDFFile;
+  onRemoveFile?: () => void;
+}
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, uploadedFile, onRemoveFile }) => {
+  const isUser = message.type === 'user';
+  const isSystem = message.type === 'system';
+  
+  if (isSystem && message.content === 'FILE_UPLOADED' && uploadedFile) {
+    const isUploading = uploadedFile.status === 'uploading' || uploadedFile.status === 'processing';
+
+    return (
+      <div className="flex justify-center mb-6">
+        <div className="relative bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 max-w-md w-full">
+          {isUploading && (
+            <button 
+              onClick={onRemoveFile}
+              className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors"
+              aria-label="Cancel upload"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-800 text-sm truncate pr-6">{uploadedFile.name}</p>
+              <p className="text-xs text-gray-500">{formatFileSize(uploadedFile.size)}</p>
+              <div className="flex items-center gap-2 mt-1">
+                {uploadedFile.status === 'ready' && (
+                  <>
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    <span className="text-xs text-green-600 font-medium">Upload complete</span>
+                  </>
+                )}
+                {isUploading && (
+                  <>
+                    <Loader className="w-3 h-3 animate-spin text-blue-500" />
+                    <span className="text-xs text-blue-600">
+                      {uploadedFile.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                    </span>
+                  </>
+                )}
+                {uploadedFile.status === 'error' && (
+                  <>
+                    <AlertCircle className="w-3 h-3 text-red-500" />
+                    <span className="text-xs text-red-600">Error</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {isUploading && (
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+              <div
+                className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${uploadedFile.uploadProgress}%` }}
+              ></div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+  <div className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : ''}`}>
+    {/* 아바타 */}
+    <div
+      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-blue-200 ${
+        isUser ? 'bg-gradient-to-r from-blue-50 to-indigo-50' : 'bg-gray-100'
+      }`}
+    >
+      {isUser ? (
+        <User className="w-4 h-4 text-gray-400" />
+      ) : (
+        <Bot className="w-4 h-4 text-gray-400" />
+      )}
+    </div>
+
+    {/* 말풍선 + 타임스탬프 */}
+    <div className={`max-w-[75%] ${isUser ? 'text-right' : ''}`}>
+      <div
+        className={`inline-block p-4 rounded-2xl shadow-sm ${
+          isUser
+            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-800 border border-blue-200 rounded-br-md'
+            : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
+        }`}
+      >
+        {/* ✅ 마크다운 렌더링: **굵게**, 리스트, 표 등 */}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+        >
+          {message.content}
+        </ReactMarkdown>
+      </div>
+
+      <p className={`text-xs text-gray-500 mt-2 ${isUser ? 'text-right' : ''}`}>
+        {message.timestamp.toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </p>
+    </div>
+  </div>
+);
+};
